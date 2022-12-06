@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import makeStyles from '@mui/styles/makeStyles';
 import {Redirect, RouteComponentProps} from "@reach/router";
 import {AuthService} from "../machines/authMachine";
@@ -6,6 +6,7 @@ import {AnyState} from "xstate";
 import {Box, Paper, Typography, Divider} from "@mui/material";
 import SessionInfo from "../components/Session";
 import Profile from "../components/Profile";
+import { useActor } from "@xstate/react";
 
 const useStyles = makeStyles((theme) => ({
     box: {
@@ -60,6 +61,12 @@ const profileSelector = (state: AnyState) => state?.context?.user;
 
 function ProfileContainer({authService}: ProfileProps) {
     const classes = useStyles();
+    const [state, send] = useActor(authService);
+    useEffect(() => {
+        if (state.matches('unauthorized')) {
+            send('CHECK')
+        }
+    }, [state]);
 
 
     return (

@@ -2,7 +2,7 @@ import React, {StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './index.css';
-import './gigya/main';
+// import './gigya/main';
  import { BrowserRouter } from "react-router-dom";
 import {
     BrowserRouter as Router,

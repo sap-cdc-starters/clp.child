@@ -183,7 +183,7 @@ function PrivateRoute({authService, as: Comp, ...props}: Props) {
     const [state, send] = useActor(authService);
     useEffect(() => {
         if (state.matches('unauthorized')) {
-            send('LOGIN')
+            send('CHECK')
         }
     }, [state]);
 

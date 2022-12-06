@@ -19,7 +19,6 @@
 
 import {log,getFromLocalStorage, setInLocalStorage} from "./utils";
 const query = document.querySelector.bind(document);
-const queryAll = document.querySelectorAll.bind(document);
 
 /**
  * Changes the API key of the site, writing into the local storage the value of this new API Key and reloading the page.
@@ -58,6 +57,20 @@ export function loadGigyaForApiKey(apiKey) {
         "https://cdns.gigya.com/js/gigya.js?apikey=" + apiKey
     );
     document.body.appendChild(newScript);
+    var oidScript = document.createElement("script");
+    oidScript.setAttribute(
+        "src",
+        "https://cdns.gigya.com/js/gigya.oidc.js?apiKey=" + apiKey
+    );
+    oidScript.insertAdjacentHTML("beforeend", `{
+        'loginURL':'/#signin',
+        'consentURL':'/#consent',
+        'errorURL':'/#errorURL'
+        
+    }`);
+    oidScript.setAttribute('consentURL', '/#consent');
+    oidScript.setAttribute('errorURL', '/#error');
+    document.body.appendChild(oidScript);
 
     // Check if loaded properly, if don't, delete the localstorage param and reload the page again
     setTimeout(checkIfGigyaLoaded, 1500);
@@ -83,7 +96,7 @@ function clearCustomApiKey() {
  * Check if loaded properly, if don't, delete the localstorage param and reload the page again
  */
 export function checkIfGigyaLoaded() {
-    if (typeof window.gigya === "undefined" || window.gigya.isReady === false) {
+    if (typeof window.gigya === "undefined") {
         // Clear wrong api key
         const apiKeyFromLocalStorage = getFromLocalStorage("reload-with-apikey");
         if (
@@ -101,8 +114,12 @@ export function checkIfGigyaLoaded() {
             );
             clearCustomApiKey();
         }
+        return false;
     }
+    return true;
+
 }
+
 
 /**
  * Validates (Via backend) the incoming API Key. If the backend call is broken, it degrades to a valid API Key, that it will fail later when it's tried to be loaded.
@@ -114,7 +131,7 @@ export function validateAPIKey(apiKey) {
     //
     log("X. - Validating api key " + apiKey + "... ", "BACKEND CALL");
 
-     const id_token = "";
+    const id_token = "";
 
     // We make a SYNCHRONOUS url call (only few millis)
     const baseDomainsForApiKey =

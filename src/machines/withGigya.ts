@@ -10,9 +10,11 @@ import {
 } from "../gigya/gigyaAuthMachine";
 import {omit} from "lodash/fp";
 import {AuthMachine} from "./authMachine";
+import {GigyaSdk, loader} from "../gigya/gigyaLoadMachine";
+import { assign } from "xstate";
 
 function toMfa(tokenDetails: any) {
-    const forMfa = tokenDetails.sub_id;
+    const forMfa = tokenDetails && tokenDetails.sub_id || {};
     forMfa.authTime = tokenDetails.authTime;
     forMfa.iat = tokenDetails.iat;
     forMfa.exp = tokenDetails.iat;
@@ -22,7 +24,14 @@ function toMfa(tokenDetails: any) {
 }
 
 export const withGigya= (authMachine:AuthMachine)=>authMachine.withConfig({
+
     services: {
+        loader: (context, event) => loader,
+
+        checkSession: async (ctx, event) => {
+            const payload = omit("type", event);
+            return await getAccount(payload)
+        },
         performSsoLogin: async (ctx, event) => {
             const payload = omit("type", event);
             return await performSsoLogin(payload)
@@ -111,6 +120,10 @@ export const withGigya= (authMachine:AuthMachine)=>authMachine.withConfig({
         })*/
     },
     actions: {
+        onLoaded: assign({
+            service: (ctx, event: { service: GigyaSdk } | { data: { service: GigyaSdk } } | any) =>
+                event.service || (event.data && event.data.service)
+        })
         // assignLoginService:assign({
         //     loginService:(context) => spawn(loginMachine.withConfig({
         //         services:{

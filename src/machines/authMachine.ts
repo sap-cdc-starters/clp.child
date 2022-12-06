@@ -9,7 +9,9 @@ const {log, resolveSend} = actions;
 
 export interface AuthMachineSchema {
     states: {
+        loading:{};
         unauthorized: {};
+        verifying: {};
         login: {};
         logout: {};
         refreshing: {};
@@ -32,10 +34,12 @@ export type AuthMachineEvents =
     | { type: "LOGIN" , [key:string]: any}
     | SocialEvent
     | SSOEvent
+    | { type: "CHECK" }
     | { type: "LOGOUT" }
     | { type: "UPDATE" }
     | { type: "REFRESH"  }
     | { type: "SIGNUP" }
+    | { type: "LOADED" }
     | { type: "REAUTH" }
     | { type: "SUBMIT" , email: string, password: string}
     | { type: "TOKEN", token: Token };
@@ -51,31 +55,77 @@ export interface AuthMachineContext {
     idToken?: IdToken;
     token?: Token;
     mfaToken?: any;
-    message?: string; 
+    message?: string;
+    service?: any;
+
 }
 
 
 export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMachineEvents>(
     {
         id: 'auth',
-        initial: "unauthorized",
+        initial: "loading",
         context: {
             user: undefined,
             idToken: undefined,
             token: undefined,
-            message: undefined 
+            message: undefined ,
 
         },
 
-      
+        on: {
+            CHECK: "verifying",
+            LOGIN: "login.initial",
+            SIGNUP: "login.signup",
+            SUBMIT: "login.password",
+            SOCIAL: "login.social",
+            SSO: "login.sso"
+        },
         states: {
+     
+   
+
+            loading: {
+                on: {
+                    LOADED: {
+                        target: "verifying", actions: ['onLoaded'],
+                    }
+                },
+                invoke: {
+                    id: "loader",
+                    src: 'loader',
+                    onDone: {
+                        target: "verifying"
+                    } 
+                   
+                },
+                
+                entry: ["startLoading"],
+                exit: ["stopLoading"]
+            },
+            verifying: {
+                invoke: {
+                    id: "checkSession",
+                    src: 'checkSession',
+                    onDone: {
+                        target: "token.exchange"
+                    },
+                    onError: {
+                        target: "login",
+                        actions: ["clearUserFromContext", "clearLocalStorage"]
+                    }
+                },
+                entry: ["startVerifying"],
+                exit: ["stopVerifying"]
+            },
             unauthorized: {
                 entry: ["resetUser", "onUnauthorizedEntry", log('unauthorized')],
                 on: {
                     LOGIN: "login.initial",
                     SIGNUP: "login.signup"
                 },
-            },
+            }, 
+           
             login: {
                 entry: ['onLoginEntry', 'assignLoginService', log('login')],
                 onDone: [{target: "token.exchange", actions: "setLoginResponse"}],
