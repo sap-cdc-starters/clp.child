@@ -46,13 +46,7 @@ function SessionInfo({authService}: SessionProps) {
 
 
     return (
-        <Paper className={classes.paper}>
-            <Paper className={classes.paper}>
-                <Typography component="h2" variant="h6" color="primary" gutterBottom>
-                    MFA Token
-                </Typography>
-                {mfaToken && <JsonView data={mfaToken}/>}
-            </Paper>
+        <Paper className={classes.paper}> 
 
             <Paper className={classes.paper}>
                 <Typography component="h2" variant="h6" color="primary" gutterBottom>

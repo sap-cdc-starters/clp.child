@@ -120,22 +120,12 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
             },
             unauthorized: {
                 entry: ["resetUser", "onUnauthorizedEntry", log('unauthorized')],
-                on: {
-                    LOGIN: "login.initial",
-                    SIGNUP: "login.signup"
-                },
+         
             }, 
            
             login: {
                 entry: ['onLoginEntry', 'assignLoginService', log('login')],
-                onDone: [{target: "token.exchange", actions: "setLoginResponse"}],
-                on: {
-                    SUBMIT: ".password",
-                    SOCIAL: ".social",
-                    SIGNUP: ".signup",
-                    SSO: ".sso"
-
-                },
+                onDone: [{target: "token.exchange", actions: "setLoginResponse"}],            
                 states: {
                     initial:{
                         on: {
@@ -222,22 +212,17 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
 
             },
             token: {
-
                 onDone: {target: 'authorized'},
   
                 states:{
-                    exchange:{
-                        
+                    exchange:{ 
                         invoke: {
                             src: "getToken",
                             onDone: [
                                 { target: '#authorized', actions: "setToken"},
-                                // {target: 'authorized', actions: "enrichToken", cond: context => context.token !== undefined}
                             ],
                             onError: {target: "error", actions: ["onError", "logEventData"]},
-                        },
-                      
-
+                        }, 
                     },
                     enrich: {
                         invoke: {
@@ -248,12 +233,12 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
 
                     },
                     error: {
-                        entry: [log("authorized"), "onAuthorizedEntry"],
+                        entry: [log("token.error"), "onTokenError"],
                         type: "final"
 
                     },
-                    authorized: {
-                        entry: [log("authorized"), "onAuthorizedEntry"],
+                    success: {
+                        entry: [log("token.success"), "onTokenSuccess"],
                         type: "final"
 
                     }
@@ -300,6 +285,8 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
                     REAUTH: "reauth",
                     REFRESH: "refreshing"
                 },
+                
+             
 
 
             },
