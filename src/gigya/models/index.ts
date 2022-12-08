@@ -1,2 +1,2 @@
 export * from './account'
-export * from './gigya-interface'
+export * from './interface'

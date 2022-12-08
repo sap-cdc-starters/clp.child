@@ -29,7 +29,7 @@
     "serve": "vite preview",
     "predeploy": "npm run build -o dist",
     "deploy": "gh-pages -d dist",
-    "postinstall": "xstate typegen \"./src/**/*.ts?(x)\"",
+    "postinstall__": "xstate typegen \"./src/**/*.ts?(x)\"",
 
     "typegen": "xstate typegen \"src/**/*.ts?(x)\" "
   },
