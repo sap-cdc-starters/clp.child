@@ -23,3 +23,6 @@ yarn-debug.log*
 yarn-error.log*
 
 .vercel
+.idea/.idea.store.login.dir/.idea/indexLayout.xml
+.idea/.idea.store.login.dir/.idea/misc.xml
+.idea/.idea.store.login.dir/.idea/vcs.xml

@@ -1,17 +1,18 @@
+ 
 // @ts-nocheck - may need to be at the start of file
-import gigyaWebSDK from "./gigyaWebSDK";
 import {SocialPayload} from "../machines/authMachine";
+import {Account, IAuthMethods, IBaseEvent, ILoginEvent} from "./models";
+import { AnyRecord } from "./models";
 
 // @ts-ignore
 
 declare type AnyRequest = { [key: string]: any } | undefined;
 
-export async function performSignup(args: any) {
+export async function performSignup(args: any):Promise<ILoginEvent> {
     return new Promise((resolve, reject) => {
         initRegistration().then(regToken =>
             gigyaWebSDK().accounts.register({
-                email: args.email,
-                password: args.password,
+                ...args,
                 finalizeRegistration: true,
                 regToken: regToken,
                 callback: (response) => {
@@ -75,14 +76,10 @@ export async function initRegistration(args: any) {
     });
 }
 
-export async function performSignin(args) {
+export async function performSignin(args) : Promise<ILoginEvent>{
     return new Promise((resolve, reject) => {
-        const params = {
-            loginID: args.email,
-            password: args.password,
-            ...args
-        };
-        gigyaWebSDK().accounts.login(params, {
+      
+        gigyaWebSDK().accounts.login(args, {
             callback: (response) => {
                 if (response.errorCode === 0) {
                     resolve(response);
@@ -99,7 +96,7 @@ export async function performSignin(args) {
     });
 
 }
-export async function performSsoLogin(args) {
+export function performSsoLogin(args):Promise<ILoginEvent> {
     return new Promise((resolve, reject) => {
 
         gigyaWebSDK().sso.login(args, {
@@ -120,14 +117,30 @@ export async function performSsoLogin(args) {
 
 }
 
-export function getJwt(args) {
+export function getJwt(args): Promise<{id_token: string}> {
     return new Promise((resolve, reject) => {
         gigyaWebSDK().accounts.getJWT({
             ...(args || {}),
-            fields: 'profileField,data.dataField,phone_number,isRegistered,authMethods,email',
+            fields: 'phonenumber,isRegistered,authMethods,email,loginProvider',
             callback: function (res) {
                 if (res.errorCode === 0) {
-                    resolve(res.id_token as string)
+                    resolve(res)
+                } else {
+                    reject(res)
+                }
+
+            }
+        })
+    });
+}
+
+export function getAuthMethods(args): Promise<IAuthMethods> {
+    return new Promise((resolve, reject) => {
+        gigyaWebSDK().accounts.auth.getMethods({
+            ...(args || {}),
+            callback: function (res) {
+                if (res.errorCode === 0) {
+                    resolve(res)
                 } else {
                     reject(res)
                 }
@@ -138,7 +151,40 @@ export function getJwt(args) {
 }
 
 
-export function getAccount(args): Promise<any> {
+export function dsStore(args:DsRecord): Promise<IBaseEvent> {
+    return new Promise((resolve, reject) => {
+        gigyaWebSDK().ds.store({
+            ...(args || {}),
+            callback: function (res) {
+                if (res.errorCode === 0) {
+                    resolve(res)
+                } else {
+                    reject(res)
+                }
+
+            }
+        })
+    });
+}
+declare type DsRecord={oid:string,  data:AnyRecord,type:string, updateBehavior: string};
+
+declare type DsGet= {oid:string,  type:string};
+export function dsGet(args :DsGet): Promise<DsRecord> {
+    return new Promise((resolve, reject) => {
+        gigyaWebSDK().ds.get({
+            ...(args || {}),
+            callback: function (res) {
+                if (res.errorCode === 0) {
+                    resolve(res)
+                } else {
+                    reject(res)
+                }
+
+            }
+        })
+    });
+}
+export function getAccount(args): Promise<Account> {
     return new Promise((resolve, reject) => {
         gigyaWebSDK().accounts.getAccountInfo({
             ...(args || {}),
@@ -162,7 +208,7 @@ export type LoginParams = {
 
 export type SocialLoginParams = SocialPayload & LoginParams
 
-export const socialLoginAsync = (args: SocialLoginParams) => {
+export const socialLoginAsync = (args: SocialLoginParams): Promise<ILoginEvent> => {
     return new Promise((resolve, reject) => {
         const params = {
             ...(args || {}),
@@ -214,3 +260,8 @@ export const logout = (args: AnyRequest = {}) => {
     });
 }
 
+
+
+
+export const gigyaWebSDK =()=>window.gigya;
+export default gigyaWebSDK;

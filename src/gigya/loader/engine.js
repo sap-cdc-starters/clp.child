@@ -26,9 +26,8 @@
  * @since  1.0.0
  */
 
-import {disableChangeApiKeyButton, loadGigyaForApiKey, validateAPIKey} from './dynamic-apikey'
+import {disableChangeApiKeyButton, loadGigyaForApiKey, validateAPIKey, log, getFromLocalStorage, getFromQueryString, setInLocalStorage} from '../utils'
 
-import {log, getFromLocalStorage, getFromQueryString, setInLocalStorage} from "./utils";
 
 // -- 0. window.document Shorthands
 const query = document.querySelector.bind(document);

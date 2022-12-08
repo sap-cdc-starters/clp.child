@@ -3,7 +3,6 @@ import React, {useEffect} from "react";
 import "./index.css";
 import "../styles/globals.css";
 import SignIn from "../components/SignIn";
-import SignUp from "../components/SignUp";
 import {authMachine, AuthService} from "../machines/authMachine";
 // import {Hash, Router, useNavigate} from "react-router";
 // import { HashRouter as  Router} from "react-router-dom";
@@ -13,14 +12,15 @@ import {AnyState, State} from "xstate";
 import {Box, Container, createTheme, responsiveFontSizes, Snackbar, StyledEngineProvider, Theme} from "@mui/material";
 import {SnackbarContext, snackbarMachine} from "../machines/snackbarMachine";
 import AlertBar from "../components/AlertBar";
-import {withGigya} from "../machines/withGigya";
-import {notificationMachine} from "../machines/notificationsMachine";
+import {gigyaAuthApiServices} from "../gigya/services";
+import {notificationMachine, NotificationsService} from "../machines/notificationsMachine";
 import ProfileContainer from "../containers/ProfileContainer";
 import EventsContainer from "../containers/ActionsContainer";
 import {useInterpretWithLocalStorage} from "../machines/withLocalStorage";
 import { RouteComponentProps ,Router} from "@reach/router";
 import {makeStyles, ThemeProvider } from "@mui/styles";
 import NotificationsContainer from "../containers/NotificationsContainer";
+import { send } from "xstate/lib/actions";
 
 
 declare module '@mui/styles/defaultTheme' {
@@ -92,12 +92,15 @@ const theme = createTheme({
 const App = () => {
 
 
-    const authService = useInterpret(() => withGigya(authMachine));
-    // const [,sendAuth , authService] = useMachine(()=>withGigya(authMachine));
-    //
-    //  const [, , authService] = useMachine(authMachineWithGigya, {
-    //      state: state
-    //   });
+    const authService = useInterpret(() =>authMachine.withConfig({
+        services: gigyaAuthApiServices,
+        actions:{
+            onUnauthorizedEntry:send({
+                type:"LOGIN"
+            })
+        }
+    }));
+;
 
     const [, sendSnackbar, snackbarService] = useMachine(snackbarMachine);
     const [, sendNotification, notificationService] = useMachine(notificationMachine);
@@ -120,8 +123,6 @@ const App = () => {
     }, [authService]);
     const responsiveTheme = responsiveFontSizes(theme);
 
-    // @ts-ignore
-    // @ts-ignore
     return (
         <div>
             <StyledEngineProvider injectFirst>
@@ -140,8 +141,8 @@ const App = () => {
                 <Box>
 
                     <Router>
-                        <PrivateRoute default as={ProfileContainer} path={"/"} authService={authService}/>
-                        <SignIn path={"#/signin"} authService={authService}/>
+                        <PrivateRoute default as={ProfileContainer} path={"/"} authService={authService} notificationsService={notificationService}/>
+                        <SignIn path={"#/signin"} authService={authService} notificationsService={notificationService}/>
                         <ProfileContainer path="#/profile" authService={authService}/>
 
                     </Router>
@@ -163,39 +164,26 @@ const App = () => {
 export interface Props extends RouteComponentProps {
     authService: AuthService;
     as: any;
+    notificationsService: NotificationsService
 
 
 }
-
-function LoginRoute({authService}: { authService: AuthService }) {
-    const [state] = useActor(authService)
-    switch (true) {
-        case state.matches('login.signup'):
-            return <SignUp authService={authService}/>
-        default:
-            return <SignIn authService={authService}/>
-    }
-
-
-}
+ 
 
 function PrivateRoute({authService, as: Comp, ...props}: Props) {
     const [state, send] = useActor(authService);
-    useEffect(() => {
-        if (state.matches('unauthorized')) {
-            send('CHECK')
-        }
-    }, [state]);
+    // useEffect(() => {
+    //     if (state.matches('unauthorized')) {
+    //         send('LOGIN')
+    //     }
+    // }, [state]);
 
     switch (true) {
-        case state == undefined:
-            return <LoginRoute authService={authService}/>;
-
         case state.matches('login'):
-            return <LoginRoute authService={authService}/>
+            return <SignIn  {...props} authService={authService}/>
 
-        case state.matches('reauth'):
-            return <SignIn authService={authService}/>
+        case state.matches('authorized'):
+            return <Comp  {...props} authService={authService}/>
         default:
             return <Comp {...props} authService={authService}/>;
     }

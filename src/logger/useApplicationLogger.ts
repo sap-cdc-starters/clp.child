@@ -24,7 +24,7 @@ export function getPayload(event: AnyEventObject, ctx: AnyRecord) {
             ...(event.data || {}),
 
         },
-        context: ctx
+        context: omit(['service', 'loader'], ctx)
     };
 }
 

@@ -28,7 +28,10 @@
     "build": "tsc && vite build",
     "serve": "vite preview",
     "predeploy": "npm run build -o dist",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "postinstall": "xstate typegen \"./src/**/*.ts?(x)\"",
+
+    "typegen": "xstate typegen \"src/**/*.ts?(x)\" "
   },
   "eslintConfig": {
     "extends": [
@@ -49,6 +52,8 @@
     ]
   },
   "devDependencies": {
+    "@xstate/cli": "^0.4.0",
+
     "@types/jest": "^28.1.4",
     "@types/lodash": "^4.14.188",
     "@types/node": "^18.0.3",
@@ -57,7 +62,6 @@
     "@types/react-dom": "^18.0.8",
     "@types/react-router-config": "^5.0.6",
     "@types/react-router-dom": "^5.3.3",
-
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.5",
     "@vitejs/plugin-react": "^2.2.0",
@@ -68,4 +72,3 @@
     "vite-plugin-pages": "^0.27.1"
   }
 }
-

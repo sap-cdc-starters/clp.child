@@ -11,10 +11,14 @@ import makeStyles from '@mui/styles/makeStyles';
 import Container from "@mui/material/Container";
 import {useForm} from "react-hook-form";
 import TwitterIcon from "@mui/icons-material/Twitter";
-import { useSelector} from "@xstate/react";
+import { useMachine, useSelector} from "@xstate/react";
 import {AuthService} from "../machines/authMachine";
 import {ErrorOutlined} from "@mui/icons-material";
 import { Checkbox, MenuItem, Select } from "@mui/material";
+ import {loginMachine, LoginSuccessPayload} from "../machines/loginMachine";
+import { gigyaLoginApiServices } from "../gigya/services";
+ import { useAppLogger } from "../logger";
+import { NotificationsService } from "../machines/notificationsMachine";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -46,11 +50,26 @@ const useStyles = makeStyles((theme) => ({
 
 export interface SignInProps extends RouteComponentProps {
     authService: AuthService;
+    notificationsService: NotificationsService;
+
 }
 
 const loginServiceSelector = (state: any) => state.context;
-export default function SignIn({authService}: SignInProps) {
+export default function SignIn({authService, notificationsService}: SignInProps) {
     const classes = useStyles();
+    const nevigate= useNavigate();
+    const [state, send, service] = useMachine(() => loginMachine.withConfig({
+        services: gigyaLoginApiServices,
+        actions:{
+            onSuccessEntry: (ctx, {token, user}: LoginSuccessPayload) =>{
+
+                nevigate("#/profile")
+            }
+        }
+      
+    }));
+    useAppLogger(service, notificationsService.send);
+    
     const {register, handleSubmit, formState: {errors}} = useForm({
         defaultValues:{
             authFlow: "redirect",
@@ -59,9 +78,11 @@ export default function SignIn({authService}: SignInProps) {
         }
     });
     const {message} = useSelector(authService, loginServiceSelector);
+    const loading=   state.matches("loading");
+
 
     // const {loginService} = useSelector(authService, loginServiceSelector);
-    const loginService = authService;
+    const loginService = service;
  
 
     const handleSSo = async (data: any) => {
@@ -127,6 +148,8 @@ export default function SignIn({authService}: SignInProps) {
                             variant="contained"
                             color="primary"
                             className={classes.submit}
+                            disabled={loading}
+
                         >
                             Sign In With SSO
                         </Button>
@@ -145,6 +168,7 @@ export default function SignIn({authService}: SignInProps) {
                 color="primary"
                 className={classes.submit}
                 onClick={handleGoogleLogin}
+                disabled={loading}
             >
                 Sign In With Google
             </Button>

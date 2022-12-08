@@ -4,7 +4,7 @@ import {AuthService} from "../machines/authMachine";
 import { useSelector} from "@xstate/react";
 import {AnyState} from "xstate";
 import JsonView from "./JsonTreeViewer";
-import {Paper, Typography} from "@mui/material";
+import {Paper, TextareaAutosize, Typography} from "@mui/material";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -38,11 +38,13 @@ export interface SessionProps {
 }
 
 
-const jwtSelector = (state: AnyState) => state?.context;
+const jwtSelector = (state: AnyState) => state?.context?.token?.id_token;
+const devicesSelector = (state: AnyState) => state?.context?.devices;
 
 function SessionInfo({authService}: SessionProps) {
     const classes = useStyles();
-    const {idToken, mfaToken} = useSelector(authService, jwtSelector) || {};
+    const idToken = useSelector(authService, jwtSelector) || {};
+    const devices = useSelector(authService, devicesSelector) || {};
 
 
     return (
@@ -54,6 +56,14 @@ function SessionInfo({authService}: SessionProps) {
                 </Typography>
                 {idToken && idToken.details && <JsonView data={idToken.details}/>}
             </Paper>
+
+            <Paper className={classes.paper}>
+                <Typography component="h2" variant="h6" color="primary" gutterBottom>
+                    Devices
+                </Typography>
+                {devices  && <JsonView data={devices}/>}
+            </Paper>
+            {/* <TextareaAutosize >{idToken.raw}</TextareaAutosize> */}
         </Paper>
     );
 }

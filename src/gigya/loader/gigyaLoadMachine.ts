@@ -1,11 +1,12 @@
 import {loadFromConfig} from "./engine";
-import * as config from "./config/site.json";
-import {checkIfGigyaLoaded} from "./dynamic-apikey";
+import * as config from "../config/site.json";
+import {checkIfGigyaLoaded} from "../utils/dynamic-apikey";
 import { createModel } from "xstate/lib/model";
 import { interpret } from "xstate";
-import { Subject } from "rxjs";
-import {UserInfo} from "./models";
-import * as gigya from "./gigyaWebSDK";
+import { Observable, Subject } from "rxjs";
+import {UserInfo} from "../models";
+import * as gigya from "../gigyaWebSDK";
+import { LoadedEvent } from "../../machines/loginMachine";
 declare type GigyaConfig = object &{app?:string};
 declare global {
 
@@ -187,6 +188,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initialize the site (and loads Gigya file)
     gigyaService.send({type: "LOAD", config});
 });
+
+
 export const loadedSubject=new Subject<{type: "LOADED", service: any}>()  ;
 
 gigyaService.subscribe(state => {
@@ -205,9 +208,6 @@ gigyaService.subscribe(state => {
     }
 
 })
-
-
-export const loginSubject = new Subject<{type: "LOGGED_IN", user:Partial<UserInfo>}>()  ;
 
 export function sdk(config:GigyaConfig): GigyaSdk {
     let onLogin = (event:any)=>{
@@ -228,4 +228,15 @@ export function sdk(config:GigyaConfig): GigyaSdk {
 
 }
  
+
+
+export const loginSubject = new Subject<{type: "LOGGED_IN", user:Partial<UserInfo>}>()  ;
+
 export const loader= loadedSubject;
+
+export const gigya_loader_service=():
+Promise<    { service: any }> | ( Observable<LoadedEvent>)=>{
+    const state=gigyaService.getSnapshot();    
+  return  state.matches("loaded")? 
+    Promise.resolve(state.context):
+     loadedSubject}

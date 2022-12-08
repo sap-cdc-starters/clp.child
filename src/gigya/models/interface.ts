@@ -12,6 +12,12 @@ export interface IBaseGlobalEvent extends IBaseEvent {
 
 }
 
+export interface IAuthMethods {
+    authMethods: any[]
+    methods: string[];
+    preferredMethod?: string;
+}
+
 export interface ILoginEvent extends IBaseGlobalEvent {
     UID: string;
     UIDSignature: string;
@@ -237,5 +243,11 @@ export type TranslationWrapper = {
     langKey: string,
     translations: Translations
 };
+
+
+
+
+
+
 
 

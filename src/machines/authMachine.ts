@@ -1,22 +1,17 @@
-import {Machine, assign, InterpreterFrom, actions, send} from "xstate";
-import {User, IdToken} from "../models";
-import {
-    logout,
-    performSignup
-} from "../gigya/gigyaAuthMachine";
+import { actions, assign, createMachine, InterpreterFrom, MachineOptionsFrom, send } from "xstate";
+import { IdToken, Token, User, UserDevices } from "../models";
+import { eventOrData } from "../utils";
+import { LoginRequest, LoginSuccessPayload, ServiceType } from "./loginMachine";
 
-const {log, resolveSend} = actions;
-
+const { log, resolveSend } = actions;
 export interface AuthMachineSchema {
     states: {
-        loading:{};
+        loading: {};
         unauthorized: {};
         verifying: {};
         login: {};
         logout: {};
-        refreshing: {};
         authorized: {};
-        reauth: {};
         error: {};
         token: {};
     };
@@ -28,63 +23,82 @@ export interface SocialPayload {
     [key: string]: any
 }
 
+
 export type SocialEvent = SocialPayload & { type: "SOCIAL" };
-export type SSOEvent =  { type: "SSO", authFlow: 'redirect' | 'popup', redirectURL?: string, context?: {[key:string]:any}, useChildContext?: boolean };
+export type SSOEvent = { type: "SSO", authFlow: 'redirect' | 'popup', redirectURL?: string, context?: { [key: string]: any }, useChildContext?: boolean };
 export type AuthMachineEvents =
-    | { type: "LOGIN" , [key:string]: any}
-    | SocialEvent
-    | SSOEvent
+    | { type: "LOGIN" } & LoginRequest
     | { type: "CHECK" }
     | { type: "LOGOUT" }
-    | { type: "UPDATE" }
-    | { type: "REFRESH"  }
-    | { type: "SIGNUP" }
+    | { type: "REFRESH" }
     | { type: "LOADED" }
     | { type: "REAUTH" }
-    | { type: "SUBMIT" , email: string, password: string}
-    | { type: "TOKEN", token: Token };
+    | { type: "TOKEN", token: Token } 
+    | { type: "LOGGED_IN" } 
+;
 
-export interface Token {
-    access_token?: string;
-    refresh_token?: string;
-    id_token?: string;
-}
 
 export interface AuthMachineContext {
     user?: User;
-    idToken?: IdToken;
+    devices?: UserDevices;
     token?: Token;
-    mfaToken?: any;
-    message?: string;
-    service?: any;
+    service?: ServiceType;
 
 }
 
+ 
 
-export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMachineEvents>(
+
+
+type AuthMachineServices = {
+    checker: {
+        data: Token
+    },
+    refresher: {
+        data: Token
+    },
+    login: {
+        data: unknown
+    },
+    token: {
+        data: Token
+    },
+
+    logout: {
+        data: {
+
+        }
+    },
+    getUserProfile: {
+        data: User
+    },
+
+    getUserDevices: {
+        data: UserDevices
+    },
+
+
+}
+
+export const authMachine = createMachine(
     {
         id: 'auth',
-        initial: "loading",
-        context: {
-            user: undefined,
-            idToken: undefined,
-            token: undefined,
-            message: undefined ,
+        tsTypes: {} as import("./authMachine.typegen").Typegen0,
+        schema: {
+            context: {} as AuthMachineContext,
+            events: {} as AuthMachineEvents,
+            services: {} as AuthMachineServices
+
 
         },
-
+        initial: "loading",
         on: {
             CHECK: "verifying",
-            LOGIN: "login.initial",
-            SIGNUP: "login.signup",
-            SUBMIT: "login.password",
-            SOCIAL: "login.social",
-            SSO: "login.sso"
+            TOKEN: [{ target: "#authorized" }],
+            LOGGED_IN: [{ target: "token" }],
+
         },
         states: {
-     
-   
-
             loading: {
                 on: {
                     LOADED: {
@@ -96,218 +110,99 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
                     src: 'loader',
                     onDone: {
                         target: "verifying"
-                    } 
-                   
+                    }
+
                 },
-                
+
                 entry: ["startLoading"],
                 exit: ["stopLoading"]
             },
+
             verifying: {
                 invoke: {
-                    id: "checkSession",
-                    src: 'checkSession',
-                    onDone: {
-                        target: "token.exchange"
-                    },
+                    id: "checker",
+                    src: 'checker',
+                    onDone: [{ target: "token" }],
+
                     onError: {
-                        target: "login",
-                        actions: ["clearUserFromContext", "clearLocalStorage"]
+                        target: "#unauthorized"
                     }
                 },
                 entry: ["startVerifying"],
                 exit: ["stopVerifying"]
             },
-            unauthorized: {
-                entry: ["resetUser", "onUnauthorizedEntry", log('unauthorized')],
-         
-            }, 
-           
-            login: {
-                entry: ['onLoginEntry', 'assignLoginService', log('login')],
-                onDone: [{target: "token.exchange", actions: "setLoginResponse"}],            
-                states: {
-                    initial:{
-                        on: {
-                            SUBMIT: "password",
-                            SOCIAL: "social",
-                            SIGNUP: "signup",
-                            SSO: "sso"
 
-                        }
-                    },
-                    social: {
-                        entry: log('social'),
-                        invoke: {
-                            src: "performSocialLogin",
-                            onDone: {target: "authorized", actions: "onSuccess"},
-                            onError: {target: "initial", actions: ["onError", "logEventData"]},
-                        },
-                    }, 
-                    sso: {
-                        entry: log('sso'),
-                        invoke: {
-                            src: "performSsoLogin",
-                            onDone: {target: "authorized", actions: "onSuccess"},
-                            onError: {target: "initial", actions: ["onError", "logEventData"]},
-                        },
-                    },
-                    password: {
-                        invoke: {
-                            src: "performLogin",
-                            onDone: {target: "authorized", actions: "onSuccess"},
-                            onError: {target: "initial", actions: ["onError", "logEventData"]},
-                        }
-                    },
-                    signup: {
-                        entry: log('signup'),
-                        onDone: 'authorized', 
-                        on: { 
-                            LOGIN: "initial",
-                            SUBMIT: '.submit'
-                        },
-                        
-                        states:{
-                            submit:{
-                                invoke: {
-                                    src: "performSignup",
-                                    onDone: {target: "success", actions: "onSuccess"},
-                                    onError: {target: "error", actions: ["onError", "logEventData"]},
-                                },
-                            },
-                            success: {
-                                entry: [log("success"), "onRegisterSuccessEntry"],
-                                type: "final"
-
-                            },
-                            error: {
-                             
-                            
-
-                            }
-                        }
-                        
-                        
-                       
-                    },
-
-                    authorized: {
-                        entry: [log("authorized"), "onAuthorizedEntry"],
-                        type: "final"
-
-                    },
-                   
-                },
-                invoke: {
-                    src: 'login-service',
-                    id: 'loginService',
-
-                    data: {
-                        token: (context: AuthMachineContext, _event: any) => context.token
-                    },
-                    onDone: {target: "token", actions: "setLoginResponse"},
-                    onError: {target: "unauthorized", actions: ["onError", "logEventData"]},
-
-                },
-
-            },
-            token: {
-                onDone: {target: 'authorized'},
-  
-                states:{
-                    exchange:{ 
-                        invoke: {
-                            src: "getToken",
-                            onDone: [
-                                { target: '#authorized', actions: "setToken"},
-                            ],
-                            onError: {target: "error", actions: ["onError", "logEventData"]},
-                        }, 
-                    },
-                    enrich: {
-                        invoke: {
-                            src: "enrichToken",
-                            onDone: {target: '#authorized', actions: "setToken"},
-                            onError: {target: "error", actions: ["onError", "logEventData"]},
-                        }   
-
-                    },
-                    error: {
-                        entry: [log("token.error"), "onTokenError"],
-                        type: "final"
-
-                    },
-                    success: {
-                        entry: [log("token.success"), "onTokenSuccess"],
-                        type: "final"
-
-                    }
-                    
-                }
-            },
-            reauth: {
-                entry: ["onReauthEntry", log('reauth')],
-                onDone: [{target: "token.enrich", actions: "setLoginResponse"}],
-
-                on: {
-                    SUBMIT: {
-                        actions:send({type: "PASSWORD", mode:"reauth"}),
-                        target: "login.password"
-                    },
-                    SOCIAL: {
-                        actions:send({type: "SOCIAL", mode:"reauth", to:"login"}),
-                        target: "login.social"
-                    },
-                    SIGNUP: {
-                        actions:send({type: "SIGNUP", mode:"reauth", to:"login"}),
-                        target: "login.signup"
-                    },
-                    SSO: {
-                        actions:send({type: "SSO", mode:"reauth", to:"login"}),
-                        target: "login.sso"
-                    }
-                }
-                 
-
-
-            },
-         
             authorized: {
                 id: "authorized",
-                entry: [log("authorized"), "onAuthorizedEntry"],
-                invoke: {
-                    src: "getUserProfile",
-                    onDone: {actions: "setUserProfile"},
-                    onError: {actions: ["onError", "logEventData"]},
-                },
+                entry: ["setToken", "onAuthorizedEntry"],
                 on: {
-                    LOGOUT: "logout",
-                    REAUTH: "reauth",
-                    REFRESH: "refreshing"
+                    LOGOUT: 'logout',
+                    REAUTH: 'login',
+
                 },
-                
-             
+                type: "parallel",
+                initial: 'profile',
+                states: {
+                    profile: {
+                        invoke: {
+                            src: "getUserProfile",
+                            onDone: { actions: "setUserProfile" },
+                            onError: { actions: ["onError", "logEventData"] },
+                        }
+                    },
 
+                    devices: {
+                        invoke: {
+                            src: "getUserDevices",
+                            onDone: { actions: "setUserDevices" },
+                            onError: { actions: ["onError", "logEventData"] },
+                        }
 
-            },
-            refreshing: {
-                entry: log('refreshing'),
+                    }
 
-                invoke: [{
-                    src: "getToken",
-                    onDone: {target: "authorized", actions: "setToken"},
-                    onError: {target: "unauthorized", actions: ["onError", "logEventData"]},
+                  
                 }
-                ]
+            },
+
+            unauthorized: {
+                id: "unauthorized",
+                entry: ["resetUser", "onUnauthorizedEntry", log('unauthorized')],
+
+                on: {
+                    LOGIN: 'login',
+                }
+            },
+
+
+            login: {
+                onDone: [{ target: "token" }],
+                invoke: {
+                    id: "login",
+                    src: "login",
+                    data: (_, e) =>eventOrData<LoginRequest>(e)
+                }
+            },
+
+
+            token: {
+            
+                invoke: {
+                    id: "token",
+                    src: "token",
+                    data: (_, e) => eventOrData<LoginSuccessPayload>(e),
+                    onDone: [{ actions: "setToken" , target: "#authorized"}]
+
+                }
 
             },
+
             logout: {
                 entry: log('logout'),
-
+                data: (ctx, e) => ctx.token,
                 invoke: {
-                    src: "performLogout",
-                    onDone: {target: "unauthorized"},
-                    onError: {target: "unauthorized", actions: "onError"},
+                    src: "logout",
+                    onDone: { target: "#unauthorized" },
+                    onError: { target: "error", actions: "onError" },
                 },
             },
 
@@ -315,55 +210,61 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
                 entry: ["onError", "logEventData"],
             }
 
+
+       
         },
     },
     {
 
-        actions: { 
-            logEventData: {
-                type: 'xstate.log',
-                label: 'Finish label',
-                expr: (context: any, event: any) => event.data
-            },
-            onAuthorizedEntry: async (ctx, event) => {
-
-
-            },
-            setToken: assign((ctx: any, event: any) => ({
-                token: {
-                    id_token: event.data.idToken,
-                    access_token: event.data.access_token,
-                    refresh_token: event.data.refresh_token,
-                },
-                idToken: event.data.idToken,
-                mfaToken: event.data.mfaToken
+        actions: {
+            onLoaded: assign({
+                service: (ctx, event) => eventOrData<ServiceType>(event).service,
+            }),
+            setToken: assign(({
+                token:(_ctx, event) => eventOrData <Token >(event)
             })),
 
-           
-            resetUser: assign((ctx: any, event: any) => ({
+
+            resetUser: assign((_ctx: any, _event: any) => ({
                 user: undefined,
-                idToken: undefined,
                 token: undefined,
                 mfaToken: undefined
             })),
-            setLoginResponse: assign((ctx: any, event: any) => ({
-                user: event.data?.user,
-                token: event.data?.token,
+
+            setUserProfile: assign( {
+                user:(_ctx, event) => eventOrData<User>(event)
+            }),
+
+            setUserDevices: assign(({
+                devices:(_ctx, event) =>  eventOrData <UserDevices >(event)
             })),
-            setUserProfile: assign((ctx: any, event: any) => ({
-                user: event.data.user
-            })),
-            onSuccess: assign((ctx: any, event: any) => ({
-                user: event.data.user,
-                message: undefined,
-            })),
-            onError: assign((ctx: any, event: any) => ({
+
+            onError: assign((_ctx: any, event: any) => ({
                 message: event.data.message || event.data.toString(),
             })),
+
+            onAuthorizedEntry:(_ctx: any, event: any) =>{},
+
+            onUnauthorizedEntry:(_ctx: any, event: any) =>{},
+            startLoading :(_ctx: any, event: any) =>{},
+            stopLoading :(_ctx: any, event: any) =>{},
+            startVerifying :(_ctx: any, event: any) =>{},
+            stopVerifying :(_ctx: any, event: any) =>{},
+
+            logEventData:
+            {
+                type: 'xstate.log',
+                label: 'Finish label',
+                expr: (_: any, event: any) => eventOrData(event)
+            },
+
+            
         },
+        delays: { INTERVAL: 2000 }
     }
 );
 
 export type AuthMachine = typeof authMachine;
- 
+
 export type AuthService = InterpreterFrom<AuthMachine>;
+export type  AuthServiceMap = MachineOptionsFrom<AuthMachine, true>["services"]
