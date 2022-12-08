@@ -12,10 +12,14 @@ import Typography from "@mui/material/Typography";
 import makeStyles from '@mui/styles/makeStyles';
 import Container from "@mui/material/Container";
 import {useForm} from "react-hook-form"; 
-import { useSelector} from "@xstate/react";
+import { useMachine, useSelector} from "@xstate/react";
 import {AnyState, Interpreter} from "xstate";
 import {AuthService} from "../machines/authMachine";
 import {ErrorOutlined} from "@mui/icons-material";
+import { gigyaLoginApiServices } from "../gigya/services";
+import { useAppLogger } from "../logger";
+import { loginMachine, LoginSuccessPayload } from "../machines/loginMachine";
+import { NotificationsService } from "../machines/notificationsMachine";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -47,12 +51,28 @@ const useStyles = makeStyles((theme) => ({
 
 export interface SignUpProps extends RouteComponentProps {
     authService: AuthService;
+    notificationsService: NotificationsService;
+
 }
 const errorSelector = (state: AnyState) => state?.context;
 
 const loginServiceSelector = (state: any) => state.context;
-export default function SignUp({authService}: SignUpProps) {
+export default function SignUp({authService, notificationsService}: SignUpProps) {
     const classes = useStyles();
+    const nevigate= useNavigate();
+    const [state, send, service] = useMachine(() => loginMachine.withConfig({
+        services: gigyaLoginApiServices,
+        actions:{
+            onSuccessEntry: (ctx, {token, user}: LoginSuccessPayload) =>{
+
+                nevigate("#/profile")
+            }
+        }
+      
+    }));
+    
+    useAppLogger(service, notificationsService.send);
+    
     const {register, handleSubmit, formState: {errors}, setError} = useForm();
     const {message} = useSelector(authService, loginServiceSelector);
   
@@ -65,12 +85,12 @@ export default function SignUp({authService}: SignUpProps) {
             email: data.email,
             password: data.password,
         };
-        authService.send({type: "SUBMIT", ...params})
+        service.send({type: "SIGNUP", ...params})
 
     };
     const handleLogin = async () => {
 
-        authService.send({type: "LOGIN"})
+        nevigate("#/login")
 
     };
 
