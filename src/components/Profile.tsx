@@ -1,35 +1,17 @@
 import React, {useState} from "react";
-import Avatar from "@mui/material/Avatar";
 import makeStyles from '@mui/styles/makeStyles';
 import {AuthService} from "../machines/authMachine";
 import {useActor, useSelector} from "@xstate/react";
 import {AnyState} from "xstate";
-import {Box, Paper, Typography} from "@mui/material";
+import {Box, styled, Typography} from "@mui/material";
+import Paper from "./styled/Paper";
+import Avatar from "./styled/Avatar";
+import Form from "./styled/Form";
 
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        marginTop: theme.spacing(8),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-    avatar: {
-        margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.main,
-        width: theme.spacing(12),
-        height: theme.spacing(12),
-    },
-    submit: {
-        margin: theme.spacing(3, 0, 2),
-    },
-    form: {
-        // width: "100%", // Fix IE 11 issue.
-        marginTop: theme.spacing(1),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-}));
+ 
+
+ 
+ 
 
 
 export interface ProfileProps {
@@ -40,18 +22,19 @@ export interface ProfileProps {
 const profileSelector = (state: AnyState) => state?.context?.user;
 
 function Profile({authService}: ProfileProps) {
-    const classes = useStyles();
     const {email, loginProvider, nickname, photo} = useSelector(authService, profileSelector) || {};
 
 
     return (
-        <Paper className={classes.paper} >
-            <Typography component="h2" variant="h6" color="primary" gutterBottom>
+        <Paper>
+             <Typography component="h2" variant="h6" color="primary" gutterBottom>
                 Profile Details
             </Typography>
-            <Avatar src={photo} className={classes.avatar}></Avatar>
-            <div
-                className={classes.form}
+            <Avatar src={photo} sx={{
+                backgroundColor:'secondary.main',
+            }} />
+
+            <Form
 
 
             >
@@ -68,10 +51,10 @@ function Profile({authService}: ProfileProps) {
                     <span style={{fontWeight: "bold"}}> {loginProvider}</span>.
                 </p>
 
-            </div>
+            </Form>
 
 
-        </Paper>
+         </Paper>
     );
 }
 

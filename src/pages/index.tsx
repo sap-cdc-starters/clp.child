@@ -9,86 +9,24 @@ import {authMachine, AuthService} from "../machines/authMachine";
 
 import {useActor, useInterpret, useMachine, useSelector} from "@xstate/react";
 import {AnyState, State} from "xstate";
-import {Box, Container, createTheme, responsiveFontSizes, Snackbar, StyledEngineProvider, Theme} from "@mui/material";
-import {SnackbarContext, snackbarMachine} from "../machines/snackbarMachine";
+import {Box, Container, createTheme, responsiveFontSizes, Snackbar, StyledEngineProvider, Theme, ThemeProvider} from "@mui/material";
+import {SnackbarContext, snackbarMachine, SnackbarService} from "../machines/snackbarMachine";
 import AlertBar from "../components/AlertBar";
 import {gigyaAuthApiServices} from "../gigya/services";
 import {notificationMachine, NotificationsService} from "../machines/notificationsMachine";
 import ProfileContainer from "../containers/ProfileContainer";
 import EventsContainer from "../containers/ActionsContainer";
 import {useInterpretWithLocalStorage} from "../machines/withLocalStorage";
-import { RouteComponentProps ,Router} from "@reach/router";
-import {makeStyles, ThemeProvider } from "@mui/styles";
-import NotificationsContainer from "../containers/NotificationsContainer";
+import { BrowserRouter as  Router, Navigate, Outlet, Route, Routes, useRoutes} from "react-router-dom";
+ import NotificationsContainer from "../containers/NotificationsContainer";
 import { send } from "xstate/lib/actions";
+import { LoadingButton } from "@mui/lab";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import JsonView from "../components/JsonTreeViewer";
+import { theme } from "../theme/AppTheme";
 
+ 
 
-declare module '@mui/styles/defaultTheme' {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface DefaultTheme extends Theme {
-    }
-}
-
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        marginTop: theme.spacing(8),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        margin: theme.spacing(1)
-    },
-    paperRow: {
-        marginTop: theme.spacing(8),
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        margin: theme.spacing(1)
-    }
-}));
-const theme = createTheme({
-    palette: {
-        // secondary: {
-        //     main: '#999'
-        // },
-        primary: {
-            main: '#7a7a7a'
-        }
-
-    },
-
-    typography: {
-        h5: {
-            font: 'Questrial',
-            fontStyle: 'lighter',
-            fontWeight: 'lighter',
-            fontSize: '14px',
-            fontFamily: "'Questrial', sans-serif !important"
-        },
-        button:{
-            font: 'Questrial',
-            fontStyle: 'lighter',
-            fontWeight: 'lighter',
-            fontFamily: "'Questrial', sans-serif !important",
-            fontSize: '14px',
-            opacity: 0.8
-        },
-        fontFamily: [
-            'Questrial',
-            'sans-serif',
-            '-apple-system',
-            'BlinkMacSystemFont',
-            '"Segoe UI"',
-            'Roboto',
-            '"Helvetica Neue"',
-            'Arial',
-
-            '"Apple Color Emoji"',
-            '"Segoe UI Emoji"',
-            '"Segoe UI Symbol"',
-        ].join(','),
-    },
-});
 const App = () => {
 
 
@@ -103,7 +41,7 @@ const App = () => {
 ;
 
     const [, sendSnackbar, snackbarService] = useMachine(snackbarMachine);
-    const [, sendNotification, notificationService] = useMachine(notificationMachine);
+    const [, sendNotification, notificationsService] = useMachine(notificationMachine);
 
     const showSnackbar = (payload: SnackbarContext) => sendSnackbar({type: "SHOW", ...payload});
 
@@ -123,13 +61,14 @@ const App = () => {
     }, [authService]);
     const responsiveTheme = responsiveFontSizes(theme);
 
+    const services= {authService, notificationsService ,snackbarService};
     return (
         <div>
             <StyledEngineProvider injectFirst>
                 <ThemeProvider theme={responsiveTheme}>
 
                 <EventsContainer authService={authService}/>
-            <Box
+            <Box 
                 sx={{
                     display: 'flex',
                     flexWrap: 'none',
@@ -138,18 +77,19 @@ const App = () => {
                     alignItems: "left"
                 }}
             >
-                <Box>
+             <Container fixed>
 
-                    <Router>
-                        <PrivateRoute default as={ProfileContainer} path={"/"} authService={authService} notificationsService={notificationService}/>
-                        <SignIn path={"#/signin"} authService={authService} notificationsService={notificationService}/>
-                        <ProfileContainer path="#/profile" authService={authService}/>
-
-                    </Router>
-                </Box>
+                  <AppRoutes {...services} />
+                    {/* <Routes location>
+                     <Route path="/" element={<PrivateRoute {...services} />} >
+                    <Route path="signin" element={ <SignIn   {...services} /> } />
+                    <Route path="profile" element={  <ProfileContainer authService={authService}/> } />
+                    </Route>
+                    </Routes> */}
+                </Container>
 
                 <Container fixed maxWidth="sm">
-                    <NotificationsContainer authService={authService} notificationsService={notificationService}/>
+                    <NotificationsContainer authService={authService} notificationsService={notificationsService}/>
                 </Container>
             </Box>
 
@@ -161,32 +101,44 @@ const App = () => {
     );
 };
 
-export interface Props extends RouteComponentProps {
+export interface ServicesProps   {
     authService: AuthService;
-    as: any;
-    notificationsService: NotificationsService
+    notificationsService: NotificationsService;
+    snackbarService: SnackbarService;
 
 
 }
  
 
-function PrivateRoute({authService, as: Comp, ...props}: Props) {
+function AppRoutes(props:ServicesProps) {
+    let element = useRoutes([
+      {
+        path: "/",
+        element: <AuthStateRoute {...props} />      
+      }
+   
+    ]);
+  
+    return element;
+  }
+  
+
+function AuthStateRoute(props: ServicesProps) {
+    const {authService} = props;
     const [state, send] = useActor(authService);
-    // useEffect(() => {
-    //     if (state.matches('unauthorized')) {
-    //         send('LOGIN')
-    //     }
-    // }, [state]);
+    return <div style={{minWidth: "2rem"}}>
+       
+                {state.matches('login') && <SignIn {...props} />  }
+                {state.matches('authorized') && <ProfileContainer {...props} /> }
+                {state.matches('unauthorized') && <ProfileContainer {...props} /> }
+                {state.matches('loading') && <LoadingButton />  }
+                {state.matches('error') && <JsonView data={state.context} />  }
 
-    switch (true) {
-        case state.matches('login'):
-            return <SignIn  {...props} authService={authService}/>
-
-        case state.matches('authorized'):
-            return <Comp  {...props} authService={authService}/>
-        default:
-            return <Comp {...props} authService={authService}/>;
-    }
+    
+    
+       <Outlet />
+    </div>
+    
 
 
 }

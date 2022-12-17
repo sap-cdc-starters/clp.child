@@ -93,9 +93,9 @@ export type AnyLoginService = {
     data: LoginSuccessPayload;
 }| ({data:any} & Observable<LOGGED_IN>)
 
-export const loginMachine = createMachine({
+export const loginMachine =(id:string)=> createMachine({
 
-    id: 'login',
+    id: id,
     tsTypes: {} as import("./loginMachine.typegen").Typegen0,
     schema: {
         context: {} as LoginMachineContext,

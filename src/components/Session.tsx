@@ -1,35 +1,10 @@
 import React from "react";
-import makeStyles from '@mui/styles/makeStyles';
 import {AuthService} from "../machines/authMachine";
 import { useSelector} from "@xstate/react";
 import {AnyState} from "xstate";
 import JsonView from "./JsonTreeViewer";
-import {Paper, TextareaAutosize, Typography} from "@mui/material";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        marginTop: theme.spacing(8),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-    avatar: {
-        margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.main,
-        width: theme.spacing(12),
-        height: theme.spacing(12),
-    },
-    submit: {
-        margin: theme.spacing(3, 0, 2),
-    },
-    form: {
-        // width: "100%", // Fix IE 11 issue.
-        marginTop: theme.spacing(1),
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-}));
+import { Divider, Grid, Stack, TextareaAutosize, Typography} from "@mui/material";
+import Paper from "./styled/Paper";
 
 
 export interface SessionProps {
@@ -42,29 +17,36 @@ const jwtSelector = (state: AnyState) => state?.context?.token?.id_token;
 const devicesSelector = (state: AnyState) => state?.context?.devices;
 
 function SessionInfo({authService}: SessionProps) {
-    const classes = useStyles();
     const idToken = useSelector(authService, jwtSelector) || {};
     const devices = useSelector(authService, devicesSelector) || {};
 
 
     return (
-        <Paper className={classes.paper}> 
+<Stack
+  direction="column"
+  divider={<Divider orientation="vertical" flexItem />}
+  spacing={2}
+  sx={{
+     width:"100%"
 
-            <Paper className={classes.paper}>
-                <Typography component="h2" variant="h6" color="primary" gutterBottom>
+  }}
+>
+
+            <Paper  >
+                <Typography position={"static"} left="10" component="h2" variant="h6" color="primary" gutterBottom>
                     Id Token
                 </Typography>
                 {idToken && idToken.details && <JsonView data={idToken.details}/>}
             </Paper>
 
-            <Paper className={classes.paper}>
+            <Paper  >
                 <Typography component="h2" variant="h6" color="primary" gutterBottom>
                     Devices
                 </Typography>
                 {devices  && <JsonView data={devices}/>}
             </Paper>
             {/* <TextareaAutosize >{idToken.raw}</TextareaAutosize> */}
-        </Paper>
+        </Stack>
     );
 }
 
