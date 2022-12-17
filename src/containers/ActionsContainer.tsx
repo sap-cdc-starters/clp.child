@@ -46,9 +46,9 @@ const EventsContainer: React.FC<Props> = ({authService}) => {
                 <StyledEngineProvider injectFirst>
                     <ThemeProvider theme={theme}>
 
-                        {authService.machine.events
-                            .filter((event) => event && !event.startsWith('xstate.') && !event.endsWith('invocation[0]') && !event.startsWith('done.')&& !event.startsWith('error.'))
-                            .filter((event) => !event.startsWith("SSO")  && !event.startsWith("SUBMIT")  && !event.startsWith("REGISTER")&& !event.startsWith("PASSWORD")  && !event.startsWith("SOCIAL"))
+                        {authState
+                        .nextEvents
+                            .filter((event) => !event.startsWith("done.") &&  !event.startsWith("error.")  )
                             .map((event) => {
                                 return (
                                     <Event key={event} state={authState} send={sendEvent} type={event}/>

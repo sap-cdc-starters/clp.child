@@ -10,17 +10,20 @@ import {authMachine, AuthService} from "../machines/authMachine";
 import {useActor, useInterpret, useMachine, useSelector} from "@xstate/react";
 import {AnyState, State} from "xstate";
 import {Box, Container, createTheme, responsiveFontSizes, Snackbar, StyledEngineProvider, Theme} from "@mui/material";
-import {SnackbarContext, snackbarMachine} from "../machines/snackbarMachine";
+import {SnackbarContext, snackbarMachine, SnackbarService} from "../machines/snackbarMachine";
 import AlertBar from "../components/AlertBar";
 import {gigyaAuthApiServices} from "../gigya/services";
 import {notificationMachine, NotificationsService} from "../machines/notificationsMachine";
 import ProfileContainer from "../containers/ProfileContainer";
 import EventsContainer from "../containers/ActionsContainer";
 import {useInterpretWithLocalStorage} from "../machines/withLocalStorage";
-import { RouteComponentProps ,Router} from "@reach/router";
+import { BrowserRouter as  Router, Navigate, Outlet, Route, Routes, useRoutes} from "react-router-dom";
 import {makeStyles, ThemeProvider } from "@mui/styles";
 import NotificationsContainer from "../containers/NotificationsContainer";
 import { send } from "xstate/lib/actions";
+import { LoadingButton } from "@mui/lab";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import JsonView from "../components/JsonTreeViewer";
 
 
 declare module '@mui/styles/defaultTheme' {
@@ -103,7 +106,7 @@ const App = () => {
 ;
 
     const [, sendSnackbar, snackbarService] = useMachine(snackbarMachine);
-    const [, sendNotification, notificationService] = useMachine(notificationMachine);
+    const [, sendNotification, notificationsService] = useMachine(notificationMachine);
 
     const showSnackbar = (payload: SnackbarContext) => sendSnackbar({type: "SHOW", ...payload});
 
@@ -123,6 +126,7 @@ const App = () => {
     }, [authService]);
     const responsiveTheme = responsiveFontSizes(theme);
 
+    const services= {authService, notificationsService ,snackbarService};
     return (
         <div>
             <StyledEngineProvider injectFirst>
@@ -139,17 +143,17 @@ const App = () => {
                 }}
             >
                 <Box>
-
-                    <Router>
-                        <PrivateRoute default as={ProfileContainer} path={"/"} authService={authService} notificationsService={notificationService}/>
-                        <SignIn path={"#/signin"} authService={authService} notificationsService={notificationService}/>
-                        <ProfileContainer path="#/profile" authService={authService}/>
-
-                    </Router>
+                  <AppRoutes {...services} />
+                    {/* <Routes location>
+                     <Route path="/" element={<PrivateRoute {...services} />} >
+                    <Route path="signin" element={ <SignIn   {...services} /> } />
+                    <Route path="profile" element={  <ProfileContainer authService={authService}/> } />
+                    </Route>
+                    </Routes> */}
                 </Box>
 
                 <Container fixed maxWidth="sm">
-                    <NotificationsContainer authService={authService} notificationsService={notificationService}/>
+                    <NotificationsContainer authService={authService} notificationsService={notificationsService}/>
                 </Container>
             </Box>
 
@@ -161,32 +165,44 @@ const App = () => {
     );
 };
 
-export interface Props extends RouteComponentProps {
+export interface ServicesProps   {
     authService: AuthService;
-    as: any;
-    notificationsService: NotificationsService
+    notificationsService: NotificationsService;
+    snackbarService: SnackbarService;
 
 
 }
  
 
-function PrivateRoute({authService, as: Comp, ...props}: Props) {
+function AppRoutes(props:ServicesProps) {
+    let element = useRoutes([
+      {
+        path: "/",
+        element: <AuthStateRoute {...props} />      
+      }
+   
+    ]);
+  
+    return element;
+  }
+  
+
+function AuthStateRoute(props: ServicesProps) {
+    const {authService} = props;
     const [state, send] = useActor(authService);
-    // useEffect(() => {
-    //     if (state.matches('unauthorized')) {
-    //         send('LOGIN')
-    //     }
-    // }, [state]);
+    return <div>
+       
+                {state.matches('login') && <SignIn {...props} />  }
+                {state.matches('authorized') && <ProfileContainer {...props} /> }
+                {state.matches('unauthorized') && <ProfileContainer {...props} /> }
+                {state.matches('loading') && <LoadingButton />  }
+                {state.matches('error') && <JsonView data={state.context} />  }
 
-    switch (true) {
-        case state.matches('login'):
-            return <SignIn  {...props} authService={authService}/>
-
-        case state.matches('authorized'):
-            return <Comp  {...props} authService={authService}/>
-        default:
-            return <Comp {...props} authService={authService}/>;
-    }
+    
+    
+       <Outlet />
+    </div>
+    
 
 
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import {RouteComponentProps, useNavigate} from "@reach/router"
+import { useNavigate} from "react-router"
 
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
@@ -19,6 +19,7 @@ import { Checkbox, MenuItem, Select } from "@mui/material";
 import { gigyaLoginApiServices } from "../gigya/services";
  import { useAppLogger } from "../logger";
 import { NotificationsService } from "../machines/notificationsMachine";
+import { ServicesProps } from "../pages";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -48,14 +49,10 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export interface SignInProps extends RouteComponentProps {
-    authService: AuthService;
-    notificationsService: NotificationsService;
-
-}
+export interface SignInProps extends ServicesProps{};
 
 const loginServiceSelector = (state: any) => state.context;
-export default function SignIn({authService, notificationsService}: SignInProps) {
+export default function SignIn({authService, notificationsService}: ServicesProps) {
     const classes = useStyles();
     const nevigate= useNavigate();
     const [state, send, service] = useMachine(() => loginMachine.withConfig({
