@@ -17,10 +17,10 @@ import Avatar from "./styled/Avatar";
 import Form from "./styled/Form";
 import { ButtonGroup } from "@mui/material";
 import PopperToggle from "./styled/PoperText";
-import { ServicesProps } from "../pages";
  
 import { Link } from "react-router-dom";
 import { gigyaLoginApiServices } from "../gigya/services";
+import { ServicesProps } from "../ioc/services";
 
 export interface SignUpProps extends ServicesProps {
 }

@@ -32,6 +32,8 @@ export interface NotificationsContext {
 }
 
 export const notificationsMachineConfig: MachineConfig<NotificationsContext, NotificationsSchema, NotificationsEvents> = {
+    predictableActionArguments: true,
+
     context: {
         notifications: Array.of<NotificationResponseItem>()
     },

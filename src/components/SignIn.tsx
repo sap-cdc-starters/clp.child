@@ -1,12 +1,11 @@
-import React from "react";
-import { useNavigate } from "react-router";
+import React, { useEffect } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { useForm } from "react-hook-form";
 import TwitterIcon from "@mui/icons-material/Twitter";
-import { useMachine, useSelector } from "@xstate/react";
+import { useInterpret, useMachine, useSelector } from "@xstate/react";
 import {
     CodeOutlined,
   ErrorOutlined,
@@ -26,31 +25,38 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
-import { loginMachine, LoginSuccessPayload } from "../machines/loginMachine";
+import { LoginMachine, loginMachine, LoginSuccessPayload } from "../machines/loginMachine";
 import { gigyaLoginApiServices } from "../gigya/services";
 import { useAppLogger } from "../logger";
-import { ServicesProps } from "../pages";
+import type { ServicesProps } from "../ioc/services";
+import PopperToggle from "./styled/PoperText";
+
 import Paper from "./styled/Paper";
 import Avatar from "./styled/Avatar";
 import Form from "./styled/Form";
-import PopperToggle from "./styled/PoperText";
+import {StateFrom} from "xstate";
 
+const loadingSelector=(state:StateFrom<LoginMachine> )=>state.matches("loading");
 export interface SignInProps extends ServicesProps {}
 
 export default function SignIn({
   notificationsService,
+  authService
 }: ServicesProps) {
-  const nevigate = useNavigate();
-  const [state, send, service] = useMachine(() =>
+  const service = useInterpret(() =>
     loginMachine('login').withConfig({
       services: gigyaLoginApiServices,
+    }
+    ),
+    {
       actions: {
-        onSuccessEntry: (ctx, { token, user }: LoginSuccessPayload) => {
-          nevigate("/profile");
-        },
-      },
-    })
-  );
+        onSuccessEntry:(ctx, event)=>{
+          authService.send({ type: "LOGGED_IN", ...ctx });
+        }
+      }
+    });
+
+  const loading = useSelector(service, loadingSelector)
   const loginService = service;
 
   useAppLogger(service, notificationsService.send);
@@ -67,7 +73,7 @@ export default function SignIn({
       redirectURL: `${window.location.origin}/profile`,
     },
   });
-  const loading = state.matches("loading");
+  
   const loginParams = watch();
 
   const handleSSo = async (data: any) => {
@@ -79,7 +85,7 @@ export default function SignIn({
   };
 
   return (
-    <Paper>
+    <Paper sx={{position:"sticky" , top:"3rem" , justifySelf:"center"}}>
       <Avatar sx={{ backgroundColor: "secondary.main" }} color="secondary">
         <LockOutlinedIcon />
       </Avatar>
@@ -139,6 +145,7 @@ export default function SignIn({
             variant="outlined"
             color="secondary"
           aria-label="outlined secondary button group"
+          fullWidth
         >
           <Button
             startIcon={<LoginOutlined />}
@@ -146,6 +153,7 @@ export default function SignIn({
             type="submit"
             color="secondary"
             disabled={loading}
+            fullWidth
           >
             Login
           </Button>

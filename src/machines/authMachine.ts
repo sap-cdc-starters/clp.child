@@ -114,6 +114,7 @@ type AuthMachineServices = {
 export const authMachine = createMachine(
     {
         id: 'auth',
+        predictableActionArguments: true,
         tsTypes: {} as import("./authMachine.typegen").Typegen0,
         schema: {
             context: {} as AuthMachineContext,
@@ -185,7 +186,7 @@ export const authMachine = createMachine(
                         onError: { actions: ["onError", "logEventData"] },
                     }
                 ]
-               
+                
             },
 
             unauthorized: {

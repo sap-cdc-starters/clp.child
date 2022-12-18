@@ -19,12 +19,12 @@ export interface ProfileProps   {
 const profileSelector = (state: AnyState) => state?.context?.user;
 
 function ProfileContainer({authService}: ProfileProps) {
-    const [state, send] = useActor(authService);
-    useEffect(() => {
-        if (state.matches('unauthorized')) {
-            send('CHECK')
-        }
-    }, [state]);
+    // const [state, send] = useActor(authService);
+    // useEffect(() => {
+    //     if (state.matches('unauthorized')) {
+    //         send('CHECK')
+    //     }
+    // }, [state]);
 
 
     return (

@@ -1,5 +1,5 @@
 import { AnyRecord, User } from "../models";
-import { actions, assign, ServiceConfig, createMachine, InterpreterFrom, MachineOptionsFrom } from "xstate";
+import { actions, assign,   createMachine, InterpreterFrom, MachineOptionsFrom } from "xstate";
 import { eventOrData } from "../utils";
 import { Observable } from "rxjs";
 
@@ -96,6 +96,8 @@ export type AnyLoginService = {
 export const loginMachine =(id:string)=> createMachine({
 
     id: id,
+    predictableActionArguments: true,
+
     tsTypes: {} as import("./loginMachine.typegen").Typegen0,
     schema: {
         context: {} as LoginMachineContext,
@@ -250,50 +252,4 @@ export type LoginMachine = typeof loginMachine;
 export type LoginService = InterpreterFrom<LoginMachine>
 
 export type LoginServiceMap = MachineOptionsFrom<LoginMachine, true>["services"]
-
-
-  function  getIp():Promise<AnyRecord>{
-        return new Promise<AnyRecord>((resolve, reject) =>{
-            var endpoint = 'http://ip-api.com/json';
-
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                    var response = JSON.parse(this.responseText);
-                    resolve(response);
-
-                }
-               if (this.readyState == 4 && this.status >= 500) {
-                    reject(this);
-
-                }
-                
-            };
-            xhr.open('GET', endpoint, true);
-            xhr.send();
-
-        })
-    }
-
-
-    
-function getBrowserName() {
-    const agent = window.navigator.userAgent.toLowerCase()
-    switch (true) {
-      case agent.indexOf('edge') > -1:
-        return 'edge';
-      case agent.indexOf('opr') > -1 && !!(< any > window).opr:
-        return 'opera';
-      case agent.indexOf('chrome') > -1 && !!(< any > window).chrome:
-        return 'chrome';
-      case agent.indexOf('trident') > -1:
-        return 'ie';
-      case agent.indexOf('firefox') > -1:
-        return 'firefox';
-      case agent.indexOf('safari') > -1:
-        return 'safari';
-      default:
-        return 'other';
-    }
-  }
-  
+ 

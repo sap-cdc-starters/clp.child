@@ -21,15 +21,13 @@ export const StyledPaper = styled(Paper)<PaperProps>(
 
 
 export interface Props {
-    authService: AuthService;
-    notificationsService: NotificationsService;
+     notificationsService: NotificationsService;
 }
 
-const NotificationsContainer: React.FC<Props> = ({authService, notificationsService}) => {
+const NotificationsContainer: React.FC<Props> = ({ notificationsService}) => {
     const [notificationsState] = useActor(notificationsService);
 
 
-    useAppLogger(authService , notificationsService.send );
 
    
 
@@ -37,7 +35,7 @@ const NotificationsContainer: React.FC<Props> = ({authService, notificationsServ
     };
 
     return (
-        <Paper  >
+        <Paper   >
             <Typography component="h2" variant="h6" color="primary" gutterBottom>
                 Notifications
             </Typography>

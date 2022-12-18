@@ -1,19 +1,13 @@
-import React, {useState} from "react";
-import makeStyles from '@mui/styles/makeStyles';
+import React from "react";
 import {AuthService} from "../machines/authMachine";
-import {useActor, useSelector} from "@xstate/react";
+import { useSelector} from "@xstate/react";
 import {AnyState} from "xstate";
 import {Box, styled, Typography} from "@mui/material";
 import Paper from "./styled/Paper";
 import Avatar from "./styled/Avatar";
 import Form from "./styled/Form";
 
- 
-
- 
- 
-
-
+  
 export interface ProfileProps {
     authService: AuthService;
 

@@ -1,12 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
-  AnyEventObject,
   AnyState,
-  Interpreter,
-  PayloadSender,
-  StateLike,
-  StateNode,
-  TransitionDefinition,
+  PayloadSender
 } from "xstate";
 import {
   Button,
@@ -14,82 +9,58 @@ import {
   AppBar,
   Box,
   responsiveFontSizes,
-  createTheme,
-  ThemeProvider,
-  Theme,
-  StyledEngineProvider,
-  adaptV4Theme,
+
   useTheme,
   Icon,
-  IconButton,
-  styled,
   Toolbar,
 } from "@mui/material";
-import makeStyles from "@mui/styles/makeStyles";
 import { AuthService } from "../machines/authMachine";
 import { useActor } from "@xstate/react";
-import { EventObject, Sender } from "xstate/lib/types";
 import favicon from "../images/favicon.png";
-import { BrandingWatermark, SafetyDivider, SatelliteAltOutlined } from "@mui/icons-material";
 import { AppState } from "../components/AppState";
-
-declare module "@mui/styles/defaultTheme" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface DefaultTheme extends Theme {}
-}
 
 export interface Props {
   authService: AuthService;
 }
 
- 
-  
 const EventsContainer: React.FC<Props> = ({ authService }) => {
   const [authState] = useActor(authService);
 
   const sendEvent = authService.send;
-  const them = useTheme();
-  const theme = responsiveFontSizes(them);
+//   const them = useTheme();
+//   const theme = responsiveFontSizes(them);
 
   return (
     // <div className="bg-white max-w-7xl mx-auto px-4 sm:px-6">
-    <StyledEngineProvider injectFirst>
-    <ThemeProvider theme={theme}>
-    
-    <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1 }}>
+          <AppBar color="transparent" variant={"outlined"} position="fixed">
+            {/* <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}> */}
+            <Toolbar>
+              <Typography variant="h5">SSO Login</Typography>
+              <Icon sx={{ display: { xs: "none", md: "flex" }, mr: 2 }}>
+                <img src={favicon} />
+              </Icon>
 
-    <AppBar color="transparent" variant={"outlined"} position="fixed">
-      {/* <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}> */}
-      <Toolbar>
-            <Typography variant="h5">SSO Login</Typography>
-            <Icon sx={{ display: { xs: "none", md: "flex" }, mr: 2 }}>
-              <img src={favicon} />
-            </Icon>
+              {authState.nextEvents
+                .filter(
+                  (event) =>
+                    !event.startsWith("done.") && !event.startsWith("error.")
+                )
+                .map((event) => {
+                  return (
+                    <Event
+                      key={event}
+                      state={authState}
+                      send={sendEvent}
+                      type={event}
+                    />
+                  );
+                })}
 
-            {authState.nextEvents
-              .filter(
-                (event) =>
-                  !event.startsWith("done.") && !event.startsWith("error.")
-              )
-              .map((event) => {
-                return (
-                  <Event
-                    key={event}
-                    state={authState}
-                    send={sendEvent}
-                    type={event}
-                  />
-                );
-              })}
-
-              <AppState service={authService}/>
-      {/* </Box> */}
-      </Toolbar>
-    </AppBar>
-    </Box>
-    </ThemeProvider>
-        </StyledEngineProvider>
-
+              <AppState service={authService} />
+            </Toolbar>
+          </AppBar>
+        </Box>
   );
 };
 
@@ -98,7 +69,6 @@ export const Event = (props: {
   state: AnyState;
   send: PayloadSender<any>;
 }) => {
-  // const {flyJson} = useFlyPane();
 
   const { state, send, type } = props;
   const defaultEvent = state.meta?.eventPayloads?.[type] || {};
@@ -133,8 +103,6 @@ export const Event = (props: {
               state.nextEvents.includes(type)
                 ? them.palette.secondary.contrastText
                 : them.palette.primary.main
-              // `bg-yellow-100 text-yellow-800`
-              // : 'bg-gray-100 text-gray-600'
             }`}
           >
             {a}

@@ -32,14 +32,14 @@ function SessionInfo({authService}: SessionProps) {
   }}
 >
 
-            <Paper  >
-                <Typography position={"static"} left="10" component="h2" variant="h6" color="primary" gutterBottom>
+            <Paper sx={{direction:"row"}} >
+                <Typography  left="10" component="h2" variant="h6" color="primary" gutterBottom>
                     Id Token
                 </Typography>
-                {idToken && idToken.details && <JsonView data={idToken.details}/>}
+                {idToken && idToken.details && <JsonView data={idToken.details} />}
             </Paper>
 
-            <Paper  >
+            <Paper sx={{direction:"row"}} >
                 <Typography component="h2" variant="h6" color="primary" gutterBottom>
                     Devices
                 </Typography>
@@ -50,10 +50,7 @@ function SessionInfo({authService}: SessionProps) {
     );
 }
 
-function decodeJwt(token?: string) {
+ 
 
-    return token && token.split && JSON.parse(atob(token.split('.')[1]));
-
-}
 
 export default SessionInfo;
