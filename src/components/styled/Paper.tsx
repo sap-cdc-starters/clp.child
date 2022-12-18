@@ -12,6 +12,7 @@ export const StyledPaper = styled(Paper)<PaperProps>(
   );
   export const StyledDiv = styled('div')(
     ({ theme }) =>({
+        top:theme.spacing(20),
         marginTop: theme.spacing(8),
         display: "flex",
         flexDirection: "column",

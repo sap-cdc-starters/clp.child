@@ -1,20 +1,14 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import { useForm } from "react-hook-form";
-import TwitterIcon from "@mui/icons-material/Twitter";
 import { useInterpret, useMachine, useSelector } from "@xstate/react";
 import {
     CodeOutlined,
-  ErrorOutlined,
   Google,
-  JavascriptOutlined,
-  JavascriptRounded,
-  Label,
   LoginOutlined,
-  SafetyDividerOutlined,
 } from "@mui/icons-material";
 import {
   ButtonGroup,
@@ -85,15 +79,15 @@ export default function SignIn({
   };
 
   return (
-    <Paper sx={{position:"sticky" , top:"3rem" , justifySelf:"center"}}>
-      <Avatar sx={{ backgroundColor: "secondary.main" }} color="secondary">
+    <Paper sx={{position:"sticky" ,  justifySelf:"center"}}>
+      <Avatar sx={{  backgroundColor: "secondary.main" }} color="secondary" >
         <LockOutlinedIcon />
       </Avatar>
       <Typography component="h1" variant="h5">
         Sign in with SSO
       </Typography>
 
-      <Form onSubmit={handleSubmit(handleSSo)}>
+      <Form onSubmit={handleSubmit(handleSSo)} sx={{ justifyContent:"stretch"}}>
         <div>
           <FormControlLabel
             control={
@@ -144,8 +138,8 @@ export default function SignIn({
         <ButtonGroup
             variant="outlined"
             color="secondary"
-          aria-label="outlined secondary button group"
-          fullWidth
+            aria-label="split button"
+            sx={{justifySelf:"stretch", justifyContent:"stretch"}}
         >
           <Button
             startIcon={<LoginOutlined />}
@@ -153,14 +147,18 @@ export default function SignIn({
             type="submit"
             color="secondary"
             disabled={loading}
-            fullWidth
+            size="medium"
           >
             Login
           </Button>
-          <PopperToggle toggle={{
+          <PopperToggle 
+
+          toggle={{
                         startIcon:<CodeOutlined />,
                         variant:"text",
-                        color:"secondary"            
+                        color:"secondary",
+                        size:"small"
+        
           }}>
             <p>
               {`

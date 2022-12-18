@@ -1,6 +1,8 @@
 import { createTheme, ThemeOptions } from "@mui/material";
 
 export const themeOptions: ThemeOptions = {
+    spacing: (factor: number) => `${0.25 * factor}rem`, // (Bootstrap strategy)
+
    palette: {
         // secondary: {
         //     main: '#999'

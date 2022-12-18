@@ -3,9 +3,9 @@ import { Avatar, AvatarProps, styled } from "@mui/material";
 export const StyledAvatar= styled(Avatar)<AvatarProps>(
     ({ theme }) =>({
         margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.contrastText,
-        width: theme.spacing(12),
-        height: theme.spacing(12),
+        backgroundColor: theme.palette.secondary.main,
+        width: theme.spacing(20),
+        height: theme.spacing(20),
     }),
   );
 
