@@ -2,11 +2,13 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://store.us.dynidp.com",
+  "homepage": "https://login.store.dynidp.com",
   "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.10.9",
     "@mui/lab": "^5.0.0-alpha.107",
-    "@mui/material": "^5.10.13",
+    "@mui/material": "^5.11.0",
     "@openid/appauth": "^1.3.1",
     "@xstate/react": "latest",
     "axios": "latest",
@@ -22,12 +24,14 @@
   },
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview --port 8080",
+
     "build": "tsc && vite build",
     "serve": "vite preview",
     "predeploy": "npm run build -o dist",
     "deploy": "gh-pages -d dist",
     "postinstall__": "xstate typegen \"./src/**/*.ts?(x)\"",
-    "typegen": "xstate typegen \"src/**/*.ts?(x)\" "
+    "typegen": "xstate typegen \"src/**/*.ts?(x)\" --watch"
   },
   "eslintConfig": {
     "extends": [
@@ -60,6 +64,7 @@
     "@vitejs/plugin-react": "^2.2.0",
     "@xstate/cli": "^0.4.0",
     "gh-pages": "^3.2.3",
+    "prettier": "^2.8.1",
     "ts-toolbelt": "^9.6.0",
     "typescript": "^4.9.4",
     "vite": "^3.2.3",
