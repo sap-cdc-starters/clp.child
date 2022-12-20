@@ -1,7 +1,11 @@
-import { actions, assign, createMachine, InterpreterFrom, MachineOptionsFrom, send } from "xstate";
+import { actions, AnyEventObject, assign, createMachine, InterpreterFrom, MachineOptionsFrom, send } from "xstate";
 import { IdToken, Token, User, UserDevices } from "../models";
 import { eventOrData } from "../utils";
 import { LoginRequest, LoginSuccessPayload, ServiceType } from "./loginMachine";
+ // const validate = <S extends Schema>(schema: S, thing: any): thing is Schematize<S> => {
+//     return (new ajv()).validate(schema, thing) as boolean;
+// };
+ 
 
 const { log, resolveSend } = actions;
 export interface AuthMachineSchema {
@@ -23,19 +27,46 @@ export interface SocialPayload {
     [key: string]: any
 }
 
+declare type EventMeta = {
+    bar: {
+        enabled: boolean,
+        title: string,
+        icon?: string
+    }
+}
+declare type BarAction<Title extends string = string > = {  
+    title: Title,
+    icon?: string    
+}
+
+declare type WithBarAction<TEvent extends AnyEventObject,Title extends string = TEvent["type"] > =TEvent &{bar:BarAction<Title>}
+
+
 
 export type SocialEvent = SocialPayload & { type: "SOCIAL" };
 export type SSOEvent = { type: "SSO", authFlow: 'redirect' | 'popup', redirectURL?: string, context?: { [key: string]: any }, useChildContext?: boolean };
+
+type LogoutEvent = {
+    type: "LOGOUT";
+    meta: {
+        logout: BarAction<"Logout">;
+    };
+};
+
+ 
+
 export type AuthMachineEvents =
-    | { type: "LOGIN" } & LoginRequest
-    | { type: "CHECK" }
-    | { type: "LOGOUT" }
-    | { type: "REFRESH" }
+    | WithBarAction<{ type: "LOGIN" } & LoginRequest> 
+    | WithBarAction<{ type: "CHECK";}> 
+    | WithBarAction<{ type: "LOGOUT";}> 
+    | { type: "REFRESH"  }
     | { type: "LOADED" }
-    | { type: "REAUTH" }
+    | WithBarAction< { type: "REAUTH" }>
     | { type: "TOKEN", token: Token } 
     | { type: "LOGGED_IN" } 
 ;
+
+const events = {} as AuthMachineEvents;
 
 
 export interface AuthMachineContext {
@@ -83,6 +114,7 @@ type AuthMachineServices = {
 export const authMachine = createMachine(
     {
         id: 'auth',
+        predictableActionArguments: true,
         tsTypes: {} as import("./authMachine.typegen").Typegen0,
         schema: {
             context: {} as AuthMachineContext,
@@ -91,7 +123,8 @@ export const authMachine = createMachine(
 
 
         },
-        initial: "loading",
+        initial: "loading", 
+       
         on: {
             CHECK: "verifying",
             TOKEN: [{ target: "#authorized" }],
@@ -133,6 +166,7 @@ export const authMachine = createMachine(
             },
 
             authorized: {
+               
                 id: "authorized",
                 entry: ["setToken", "onAuthorizedEntry"],
                 on: {
@@ -140,28 +174,19 @@ export const authMachine = createMachine(
                     REAUTH: 'login',
 
                 },
-                type: "parallel",
-                initial: 'profile',
-                states: {
-                    profile: {
-                        invoke: {
-                            src: "getUserProfile",
-                            onDone: { actions: "setUserProfile" },
-                            onError: { actions: ["onError", "logEventData"] },
-                        }
+                invoke:[
+                   {
+                        src: "getUserProfile",
+                        onDone: { actions: "setUserProfile" },
+                        onError: { actions: ["onError", "logEventData"] },
                     },
-
-                    devices: {
-                        invoke: {
-                            src: "getUserDevices",
-                            onDone: { actions: "setUserDevices" },
-                            onError: { actions: ["onError", "logEventData"] },
-                        }
-
+                    {
+                        src: "getUserDevices",
+                        onDone: { actions: "setUserDevices" },
+                        onError: { actions: ["onError", "logEventData"] },
                     }
-
-                  
-                }
+                ]
+                
             },
 
             unauthorized: {

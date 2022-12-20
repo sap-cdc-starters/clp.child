@@ -1,33 +1,33 @@
 import React, {useEffect} from "react";
-import { Paper, Typography } from "@mui/material";
-import makeStyles from '@mui/styles/makeStyles';
+import { Paper, Typography , styled,PaperProps} from "@mui/material";
 import {NotificationUpdatePayload} from "../models";
 import {AuthService} from "../machines/authMachine";
 import {NotificationsService} from "../machines/notificationsMachine";
 import {useActor} from "@xstate/react";
 import {useAppLogger, NotificationsList} from "../logger";
  
-const useStyles = makeStyles((theme) => ({
-    paper: {
+export const StyledPaper = styled(Paper)<PaperProps>(
+    ({ theme }) =>({
         minHeight: "90vh",
         padding: theme.spacing(2),
         display: "flex",
         overflow: "auto",
         flexDirection: "column",
-    },
-}));
+    
+        
+    }),
+  );
+
+
 
 export interface Props {
-    authService: AuthService;
-    notificationsService: NotificationsService;
+     notificationsService: NotificationsService;
 }
 
-const NotificationsContainer: React.FC<Props> = ({authService, notificationsService}) => {
-    const classes = useStyles();
-    const [notificationsState, sendNotifications] = useActor(notificationsService);
+const NotificationsContainer: React.FC<Props> = ({ notificationsService}) => {
+    const [notificationsState] = useActor(notificationsService);
 
 
-    useAppLogger(authService , notificationsService.send );
 
    
 
@@ -35,7 +35,7 @@ const NotificationsContainer: React.FC<Props> = ({authService, notificationsServ
     };
 
     return (
-        <Paper className={classes.paper} >
+        <Paper   >
             <Typography component="h2" variant="h6" color="primary" gutterBottom>
                 Notifications
             </Typography>

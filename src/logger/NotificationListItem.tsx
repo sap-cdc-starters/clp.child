@@ -20,11 +20,9 @@ import {
     ListItemButton
 } from "@mui/material";
 
-import makeStyles from '@mui/styles/makeStyles';
-
+ 
 import JsonView from "../components/JsonTreeViewer";
 import {NotificationResponseItem} from "../machines/notificationsMachine";
-import {ThemeProvider} from "@mui/styles";
 
 export type NotificationListItemProps = {
     notification: NotificationResponseItem;
@@ -32,23 +30,7 @@ export type NotificationListItemProps = {
 
 } & ListItemProps
 
-const useStyles = makeStyles({
-    card: {
-        minWidth: "100%",
-    },
-    title: {
-        fontSize: 18,
-    },
-    green: {
-        color: "#4CAF50",
-    },
-    red: {
-        color: "red",
-    },
-    blue: {
-        color: "blue",
-    },
-});
+ 
 
 const NotificationListItem: React.FC<NotificationListItemProps> = ({
                                                                        notification,
@@ -78,7 +60,6 @@ const NotificationListItem: React.FC<NotificationListItemProps> = ({
     }
 
     return (
-        // <ThemeProvider theme={theme.palette.success}>
         <ListItem   {...rest} data-test={`notification-list-item-${notification.id}`}>
 
             <ListItemButton component={ListItemButton} onClick={changeExpand}>
@@ -91,14 +72,6 @@ const NotificationListItem: React.FC<NotificationListItemProps> = ({
 
             </ListItemButton>
 
-            {/*<Button onClick={changeExpand} >*/}
-            {/*    <ListItemIcon >*/}
-            {/*        {(icon && <Icon baseClassName="material-icons material-icons-outlined">{icon}</Icon> */}
-            {/*        ) || listItemIcon!}*/}
-            {/*    </ListItemIcon>*/}
-            {/*    <ListItemText primary={title} secondary={summary} about={info}/>*/}
-            {/*    <ExpandMoreIcon/>*/}
-            {/*</Button>*/}
             <Dialog
                 open={expended}
                 onClose={handleClose}
@@ -118,7 +91,6 @@ const NotificationListItem: React.FC<NotificationListItemProps> = ({
             </Dialog>
 
         </ListItem>
-        // </ThemeProvider>
     );
 };
 

@@ -16,7 +16,7 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({
                                                                  updateNotification,
                                                              }) => {
 
-    const notificationsGroup = groupBy(notifications, 'group');
+    const notificationsGroup = groupBy(notifications || [], 'group');
 
     return (
         <>

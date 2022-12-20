@@ -1,116 +1,117 @@
-import React, {useEffect} from "react";
-import {AnyEventObject, AnyState, Interpreter, PayloadSender, StateLike, StateNode, TransitionDefinition} from "xstate";
+import React from "react";
 import {
-    Button, 
-    Typography,
-    AppBar,
-    Box,
-    responsiveFontSizes,
-    createTheme,
-    ThemeProvider,
-    Theme,
-    StyledEngineProvider,
-    adaptV4Theme,
-    useTheme,
+  AnyState,
+  PayloadSender
+} from "xstate";
+import {
+  Button,
+  Typography,
+  AppBar,
+  Box,
+  responsiveFontSizes,
+
+  useTheme,
+  Icon,
+  Toolbar,
 } from "@mui/material";
-import makeStyles from '@mui/styles/makeStyles';
-import {AuthService} from "../machines/authMachine";
-import {useActor} from "@xstate/react";
-import {EventObject, Sender} from "xstate/lib/types";
-
-
-declare module '@mui/styles/defaultTheme' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface DefaultTheme extends Theme {}
-}
-
-
-
+import { AuthService } from "../machines/authMachine";
+import { useActor } from "@xstate/react";
+import favicon from "../images/favicon.png";
+import { AppState } from "../components/AppState";
 
 export interface Props {
-    authService: AuthService;
+  authService: AuthService;
 }
 
-const EventsContainer: React.FC<Props> = ({authService}) => {
-    const [authState] = useActor(authService);
+const EventsContainer: React.FC<Props> = ({ authService }) => {
+  const [authState] = useActor(authService);
 
-    const sendEvent = authService.send;
-     const them= useTheme();
-    const theme = responsiveFontSizes(them);
+  const sendEvent = authService.send;
+//   const them = useTheme();
+//   const theme = responsiveFontSizes(them);
 
-    return (
-        // <div className="bg-white max-w-7xl mx-auto px-4 sm:px-6">
-        <AppBar color="transparent"  variant={"outlined"}>
-            <Box sx={{display: 'flex', alignItems: 'center', textAlign: 'center'}}>
-               
-                <StyledEngineProvider injectFirst>
-                    <ThemeProvider theme={theme}>
+  return (
+    // <div className="bg-white max-w-7xl mx-auto px-4 sm:px-6">
+        <Box sx={{ flexGrow: 1 }}>
+          <AppBar color="transparent" variant={"outlined"} position="fixed">
+            {/* <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}> */}
+            <Toolbar>
+              <Typography variant="h5">SSO Login</Typography>
+              <Icon sx={{ display: { xs: "none", md: "flex" }, mr: 2 }}>
+                <img src={favicon} />
+              </Icon>
 
-                        {authState
-                        .nextEvents
-                            .filter((event) => !event.startsWith("done.") &&  !event.startsWith("error.")  )
-                            .map((event) => {
-                                return (
-                                    <Event key={event} state={authState} send={sendEvent} type={event}/>
-                                );
-                            })}
+              {authState.nextEvents
+                .filter(
+                  (event) =>
+                    !event.startsWith("done.") && !event.startsWith("error.")
+                )
+                .map((event) => {
+                  return (
+                    <Event
+                      key={event}
+                      state={authState}
+                      send={sendEvent}
+                      type={event}
+                    />
+                  );
+                })}
 
-                    </ThemeProvider>
-                </StyledEngineProvider>
-             </Box>
-        </AppBar>
-    );
+              <AppState service={authService} />
+            </Toolbar>
+          </AppBar>
+        </Box>
+  );
 };
 
-export const Event = (props: { type: string, state: AnyState, send: PayloadSender<any> }) => {
-    // const {flyJson} = useFlyPane(); 
+export const Event = (props: {
+  type: string;
+  state: AnyState;
+  send: PayloadSender<any>;
+}) => {
 
-    const {state, send, type} = props;
-    const defaultEvent = state.meta?.eventPayloads?.[type] || {};
-    // const eventData = {
-    //     ...defaultEvent,
-    //     ...event,
-    //     type: props.children,
-    // };
+  const { state, send, type } = props;
+  const defaultEvent = state.meta?.eventPayloads?.[type] || {};
+  // const eventData = {
+  //     ...defaultEvent,
+  //     ...event,
+  //     type: props.children,
+  // };
 
-    const them= useTheme();
+  const them = useTheme();
 
-    return (
-        <Button
-            onClick={() => {
-                // flyJson(eventData, eventData.Type);
-                send({
-                    ...defaultEvent,
-                    // ...event,
-                    type: type,
-                });
-            }}
-            // To override prose
-            style={{margin: 2}}
-        >     
-      <Typography   >
-        {type.split('.').map((a, index, array) => (
-            <span
-                key={index}
-                className={`transition-colors py-1 ${index === 0 && 'pl-2'} ${
-                    index === array.length - 1 && 'pr-2'
-                } ${
-                    state.nextEvents.includes(type)
-                        ? them.palette.secondary.contrastText:
-                        them.palette.primary.main
-                        // `bg-yellow-100 text-yellow-800`
-                        // : 'bg-gray-100 text-gray-600'
-                }`}
-            >
-          {a}
-                {index !== array.length - 1 && '.'}
+  return (
+    <Button
+      onClick={() => {
+        // flyJson(eventData, eventData.Type);
+        send({
+          ...defaultEvent,
+          // ...event,
+          type: type,
+        });
+      }}
+      // To override prose
+      style={{ margin: 2 }}
+    >
+      <Typography>
+        {type.split(".").map((a, index, array) => (
+          <span
+            key={index}
+            className={`transition-colors py-1 ${index === 0 && "pl-2"} ${
+              index === array.length - 1 && "pr-2"
+            } ${
+              state.nextEvents.includes(type)
+                ? them.palette.secondary.contrastText
+                : them.palette.primary.main
+            }`}
+          >
+            {a}
+            {index !== array.length - 1 && "."}
           </span>
         ))}
       </Typography>
-        </Button>
-
-
-    );
+    </Button>
+  );
 };
 
 export default EventsContainer;

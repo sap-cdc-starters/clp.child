@@ -153,30 +153,7 @@ const gigyaLoadingMachine = gigyaModel.createMachine({
 });
 
 export const gigyaService = interpret(gigyaLoadingMachine).start();
-/*
-function onGigyaServiceReady() {
-    console.group('onGigyaServiceReady');
-    // Check if the user was previously logged in
-    if (typeof window.gigya === "undefined") {
-        alert("Gigya is not loaded on this page :(");
-    } else {
 
-        gigyaService.send({type: "LOADED", service: sdk()})
-
-        // Check if the library is properly loaded or not (stops the flow if it's bad loaded)
-        checkIfGigyaLoaded();
-
-        // Get Information about the user, and start the load of the page elements
-        window.gigya.accounts.getAccountInfo({
-            include: "profile, data, preferences",
-            callback: console.log,
-        });
-    }
-
-    console.groupEnd();
-}
-window.onGigyaServiceReady = onGigyaLoaded;
-*/
 
 export function onGigyaLoaded() {
 
