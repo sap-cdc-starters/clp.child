@@ -64,7 +64,7 @@ export default function SignIn({
     defaultValues: {
       authFlow: "redirect",
       useChildContext: false,
-      redirectURL: `${window.location.origin}/profile`,
+      redirectURL: `${window.location.origin}`,
     },
   });
   
