@@ -167,6 +167,19 @@ export function loadFromConfig(config) {
     return loadScript(apiKey, config.domain || new URLSearchParams(location.search).domain);
 }
 
+export function loadGAGigyaIntegration(apiKey, domain) {
+    const existing = document.body.querySelector('#ga-gigya-integration');
+
+    const script = document.createElement('script');
+    // window.onGigyaServiceReady = () => {
+    //   resolve(script);
+    // }
+
+    script.id = `ga-gigya-integration`;
+    script.src = `https://cdns.gigya.com/js/gigyaGAIntegration.js`;
+    script.async = true;
+    document.body.appendChild(script);
+}
 function loadScript(apiKey, domain) {
     const existing = document.body.querySelector('#gigya-script');
 

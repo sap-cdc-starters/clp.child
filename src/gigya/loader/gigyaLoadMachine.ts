@@ -1,4 +1,4 @@
-import {loadFromConfig} from "./engine";
+import {loadFromConfig, loadGAGigyaIntegration} from "./engine";
 import * as config from "../config/site.json";
 import {checkIfGigyaLoaded} from "../utils/dynamic-apikey";
 import { createModel } from "xstate/lib/model";
@@ -103,7 +103,8 @@ const gigyaLoadingMachine = gigyaModel.createMachine({
                         LOADED: {
                             target: '#loaded',
                             actions: [
-                                'assignService'
+                                'assignService',
+                                'loadGA'
                             ]
                         },
 
@@ -129,7 +130,8 @@ const gigyaLoadingMachine = gigyaModel.createMachine({
         }),
         assignConfig: gigyaModel.assign({
             config: (_: any, ev: { config: GigyaConfig }) => ev.config // inferred
-        })
+        }),
+        loadGA: loadGAGigyaIntegration
         // onLoading: (ctx, event) => {
         //     ctx.config && loadFromConfig(ctx.config);
         // }
@@ -157,7 +159,8 @@ export const gigyaService = interpret(gigyaLoadingMachine).start();
 
 export function onGigyaLoaded() {
 
-    gigyaService.send({type: "LOADED", service: sdk(config)})
+    gigyaService.send({type: "LOADED", service: sdk(config)});
+
 
 }
 
@@ -178,7 +181,7 @@ gigyaService.subscribe(state => {
     if (state.matches("loaded")){
         console.log("loaded")
         console.log(state.context.service)
-
+       
         loadedSubject.next({type: "LOADED" , service: state.context.service})
         console.groupEnd();
 
